@@ -1,0 +1,39 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Backend",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app.main:app",
+            ],
+            "cwd": "${workspaceFolder}",
+            "jinja": true,
+            "justMyCode": false,
+            "preLaunchTask": "albemic"
+        },
+        {
+            "name": "Test: Backend",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "cwd": "${workspaceFolder}/backend",
+            "jinja": true,
+            "justMyCode": false,
+            "env": {
+                "AWS_ACCESS_KEY_ID": "test",
+                "AWS_SECRET_ACCESS_KEY": "test",
+                "AWS_DEFAULT_REGION": "us-east-1",
+                "AWS_REGION": "us-east-1",
+                "AWS_ENDPOINT_URL": "http://localhost:4566",
+                "S3_BUCKET_NAME": "dev-dp-pno-planning-agent-api-us-east-2",
+                "MIE_ENV": "dev",
+            }
+        },
+    ]
+}

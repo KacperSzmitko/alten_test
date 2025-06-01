@@ -1,0 +1,10 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "albemic",
+        "type": "shell",
+        "command": "alembic upgrade heads"
+      }
+    ]
+  }
