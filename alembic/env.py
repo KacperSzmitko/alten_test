@@ -33,6 +33,15 @@ else:
     config.set_main_option("sqlalchemy.url", settings.DB_CONFIG.DATABASE_URL)
 
 
+def process_revision_directives(context, revision, directives):
+    """Customize the naming of migration files by adding a timestamp prefix."""
+    script = directives[0]
+    if directives and script.upgrade_ops.is_empty():
+        # Skip empty migrations
+        directives[:] = []
+        return
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -71,7 +80,12 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata, include_schemas=True)
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            include_schemas=True,
+            process_revision_directives=process_revision_directives,
+        )
 
         with context.begin_transaction():
             context.run_migrations()
