@@ -1,0 +1,76 @@
+name: Check pull request
+
+on:
+  pull_request:
+
+env:
+  DB_CONFIG__HOST: localhost
+  DB_CONFIG__PORT: 5432
+  DB_CONFIG__USER: user
+  DB_CONFIG__PASSWORD: password
+  DB_CONFIG__DATABASE: mydatabase
+
+jobs:
+
+  pr-backend-check:
+    name: Check backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_DB: ${{ env.DB_CONFIG__DATABASE }}
+          POSTGRES_USER: ${{ env.DB_CONFIG__USER }}
+          POSTGRES_PASSWORD: ${{ env.DB_CONFIG__PASSWORD }}
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "pyproject.toml"
+
+      - name: Install uv and dependencies
+        run: uv sync
+
+      - name: Run ruff format check
+        run: uv run ruff check
+
+      - name: Apply Alembic migrations
+        run: uv run alembic upgrade head
+  
+      - name: Check for missing Alembic migrations
+        run: |
+          uv run alembic revision --autogenerate -m "check for missing migrations"
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No new migrations detected. Schema is up-to-date."
+          else
+            echo "::error:: New migrations detected. Please generate and commit them using alembic revision --autogenerate -m <name> command"
+            exit 1
+          fi
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Test Alembic downgrade
+        run: |
+          uv run alembic downgrade -1
+          if [ $? -ne 0 ]; then
+            echo "::error:: Alembic downgrade failed. Please check your migrations."
+            exit 1
+          fi
+          echo "Alembic downgrade successful."
